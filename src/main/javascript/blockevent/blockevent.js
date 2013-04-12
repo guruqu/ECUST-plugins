@@ -90,10 +90,11 @@ plugin("blockevent", {
 },true);
 
 
+blockevent.store.events = blockevent.store.events || {}
+blockevent.blook = blockevent.blook || {}
+blockevent.store.eventstores = blockevent.store.eventstores || {}
+
 ready(function(){
-	blockevent.store.events = blockevent.store.events || {}
-	blockevent.blook = blockevent.blook || {}
-	blockevent.store.eventstores = blockevent.store.eventstores || {}
 	echo("[JS BlockEvent] Loading");
 	for(var ei in (blockevent.store.events)){
 		var evt = blockevent.store.events[ei];

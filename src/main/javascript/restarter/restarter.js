@@ -1,4 +1,4 @@
-/*
+ï»¿/*
  
   The arrows mod adds fancy arrows to the game.
   
@@ -18,7 +18,7 @@
  
 */
 ready(function(){
-	var restartPeriod = 12*60*60;
+	var restartPeriod = 6*60*60;
 	var plugin = server.getPluginManager().getPlugin("ScriptCraftPlugin");
 	
 	var restartTask = new java.lang.Runnable({
@@ -27,16 +27,26 @@ ready(function(){
 			}
 		});
 	
+	var autoSave = new java.lang.Runnable({
+			run: function(){
+				var sender = server.getConsoleSender();
+				server.broadcastMessage("Â§AæœåŠ¡å™¨å¤‡ä»½å®Œæ¯•ï¼");
+				server.dispatchCommand(sender,"save-all");
+			}
+		});
+	
 	var timeWarn = [180,60,30,10];
 	for(var ti in timeWarn){
-		var warn = timeWarn[ti];
+		(function(warn){
 		var messageTask = new java.lang.Runnable({
 			run: function(){
-				server.broadcast("¡ìA·şÎñÆ÷ ¡ìC"+warn+" ¡ìAÃëºó½«½øĞĞ¼Æ»®ÖØÆô¡£","*");
+				server.broadcastMessage("Â§AæœåŠ¡å™¨ Â§C"+warn+" Â§Aç§’åå°†è¿›è¡Œè®¡åˆ’é‡å¯ã€‚");
 			}
 		});		
-		server.getScheduler().scheduleAsyncDelayedTask(plugin,restartTask,(restartPeriod-warn)*20);
+		server.getScheduler().scheduleAsyncDelayedTask(plugin,messageTask ,(restartPeriod-warn)*20);
+		})(timeWarn[ti]);
 	}
+	server.broadcast("Auto-save started.","*");
 	server.getScheduler().scheduleAsyncDelayedTask(plugin,restartTask,restartPeriod*20);
-	
+	server.getScheduler().runTaskTimer(plugin,autoSave,60*30*20,60*30*20);
 });

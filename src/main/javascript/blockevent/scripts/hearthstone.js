@@ -16,7 +16,7 @@
 			evt.getPlayer().sendMessage("§C 今天已经拿过了。");
 		}else{
 			server.dispatchCommand(commandSender,"rpgitem hearthstone give "+playerName);
-			evt.getPlayer().sendMessage("§A你获得了：§5[土豆炉石]");
+			evt.getPlayer().sendMessage("&A你获得了：§5[土豆炉石]");
 			storage["hearth_"+playerName].lastPick = new Date().getTime();
 		}
 	};
