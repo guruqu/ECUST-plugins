@@ -10,17 +10,11 @@ plugin("casino", {
 	help: function(){
 		self.sendMessage("casino.[setRegion][setItem][setReturn([{rate,ratio}])]");
 	},
-	getRegion: function(regionName,world){
-		if(world==null||world==undefined) world=self.world;
-		var wgPlugin = server.getPluginManager().getPlugin("WorldGuard");
-		var regions = wgPlugin.getRegionManager(world);
-		return regions.getRegion(regionName);
-	},
 	getItemsIn: function(regionName,world){
 		if(world==null||world==undefined) world=self.world;
 		var entities = world.getEntitiesByClass(org.bukkit.entity.Item);
 		var itemList = [];
-		var region = this.getRegion(regionName,world);
+		var region = utils.getRegion(regionName,world);
 		for(var i=0; i<entities.size(); i++){
 			var item = entities.get(i);
 			var item_loc = item.getLocation();
@@ -46,7 +40,7 @@ plugin("casino", {
 		duration = typeof duration !== 'undefined' ? duration : 100;
 		step = typeof step !== 'undefined' ? step : 10;
 		
-		var region = this.getRegion(regionName,world);
+		var region = utils.getRegion(regionName,world);
 		/*itemStacks = [];
 		for(var i=0;i<100;i++){
 			itemStacks.push(new org.bukkit.inventory.ItemStack(121,2));
@@ -94,22 +88,19 @@ plugin("casino", {
 		}
 	},
 	replaceBlock: function(regionName,world,from,to){
-		var region = this.getRegion(regionName,world);
-		var minY = region.getMinimumPoint().y;
-		var maxY = region.getMaximumPoint().y;
-		var minX = Math.min(region.getMinimumPoint().x,region.getMaximumPoint().x);
-		var maxX = Math.max(region.getMinimumPoint().x,region.getMaximumPoint().x);
-		var maxZ = Math.max(region.getMinimumPoint().z,region.getMaximumPoint().z);
-		var minZ = Math.min(region.getMinimumPoint().z,region.getMaximumPoint().z);
+		var blocks = utils.filterRegion(
+			regionName,
+			world,
+			function(blk){
+				if(blk.getType()==from)
+					return true;
+			});
 		
 		//__plugin.logger.info("X:"+minX+" Y:"+y+" z:"+minZ);
 		//__plugin.logger.info("X:"+maxX+" Y:"+y+" z:"+maxZ);
-		for(var y=minY;y<=maxY;y++)
-		for(var x=minX;x<=maxX;x++)
-		for(var z=minZ;z<=maxZ;z++){
-			var blk = world.getBlockAt(x,y,z);
-			if(blk.getType()==from)
-				blk.setType(to);
+		for(var i in blocks){
+			var blk = blocks[i];
+			blk.setType(to);
 		}
 	},
 	burnInterior: function(regionName,world,stopFire){

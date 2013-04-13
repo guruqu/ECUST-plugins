@@ -162,5 +162,31 @@ See the source code to utils.foreach for an example of how utils.nicely is used.
 		for(var i in obj){
 			echo(i+" = "+obj[i]);
 		}
+	},
+	getRegion: function(regionName,world){
+		if(world==null||world==undefined) world=self.world;
+		var wgPlugin = server.getPluginManager().getPlugin("WorldGuard");
+		var regions = wgPlugin.getRegionManager(world);
+		return regions.getRegion(regionName);
+	},
+	filterRegion: function(regionName,world,filter){
+		var region = this.getRegion(regionName,world);
+		var minY = region.getMinimumPoint().y;
+		var maxY = region.getMaximumPoint().y;
+		var minX = Math.min(region.getMinimumPoint().x,region.getMaximumPoint().x);
+		var maxX = Math.max(region.getMinimumPoint().x,region.getMaximumPoint().x);
+		var maxZ = Math.max(region.getMinimumPoint().z,region.getMaximumPoint().z);
+		var minZ = Math.min(region.getMinimumPoint().z,region.getMaximumPoint().z);
+		
+		var _ret = [];
+		for(var y=minY;y<=maxY;y++)
+		for(var x=minX;x<=maxX;x++)
+		for(var z=minZ;z<=maxZ;z++){
+			var blk = world.getBlockAt(x,y,z);
+			if(filter(blk)){
+				_ret.push(blk);
+			}
+		}
+		return _ret;
 	}
 };

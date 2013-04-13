@@ -57,16 +57,24 @@ plugin("market", {
 		_right = Math.pow(_right,-1.0/_n1)-_x1;
 		return _right;
 	},
-	updateTrade: function(sac,world,player){
-		// Update bean counts
-		// Update board display
-		var tradeInfo = this.getTrade();
-		
-		
-		return tradeInfo;
+	setSign: function(region,world,textArr){
+		var signs = utils.filterRegion(
+			region,
+			world,
+			function(block){
+				return block.getState() instanceof org.bukkit.block.Sign;
+			});
+		for(var i in signs){
+			var _sign = signs[i].getState();
+			for(var j=0;j<textArr.length;j++){
+				_sign.setLine(j,textArr[j]);
+			//	echo(j+","+textArr[j]);
+			}
+			_sign.update();
+		}
 	}
 	,
-	getTrade: function(sac,world,player){
+	getTrade: function(sac,world){
 		var _market = market.store.stations[sac];
 		if(_market==undefined){
 			echo("Undefined market: "+sac);
@@ -84,8 +92,9 @@ plugin("market", {
 		for(var i in _items){
 			var item = _items[i];
 			var _v = this.getValueOf(item.getType(),item.getAmount());
-			if(_v<0){
+			if(_v<0 || item.getType()==_market.type){
 				// Notify a non-tradable item
+			//	echo("Invalid item:"+item.getType());
 				continue;
 			}
 			ret.value += _v;
@@ -97,36 +106,86 @@ plugin("market", {
 		
 		var _stationtype = _market.type;
 		
-		ret.tradeAmount = getEqualAmount(_stationtype,value);
-		ret.tradeAmount += _market.remainder;
-		ret.newRemain = tradeAmount-Math.floor(tradeAmount);
-		ret.tradeAmount = Math.floor(tradeAmount);
+		ret.tradeAmount = -this.getEqualAmount(_stationtype,-ret.value);
+		if(ret.tradeAmount<0)
+			return ret;
+		ret.tradeAmount += _market.remainder+1e-5;
+		ret.newRemain = ret.tradeAmount-Math.floor(ret.tradeAmount);
+		ret.tradeAmount = Math.floor(ret.tradeAmount);
 		
 		return ret
 	},
+	getRefPrices: function(){
+		var ret = {};
+		for(var type in market.store.inventory){
+			var _type = market.store.inventory[type];
+			var _v = _type.c/Math.pow(_type.amount,_type.lambda);
+			ret[type] = _v;
+		}
+		return ret;
+	},
 	startTrade: function(sac,world,player){
 		//__plugin.logger.info("System log");
-		var _market = market.store[sac];
-		var _tradeInfo = updateTrade(sac,world,player);
+		var _market = market.store.stations[sac];
+		var _tradeInfo = this.getTrade(sac,world);
 		for(var i in _tradeInfo.itemEntity){
 			var entity = _tradeInfo.itemEntity[i];
-			entity.remove();
+			var is = entity.getItemStack();
+			if(this.validSource(is.getType())&&is.getType()!=_market.type)
+			{
+				market.store.inventory[is.getType()].amount += is.getAmount();
+				entity.remove();
+			}
 		}
 		
 		var itemStack = new org.bukkit.inventory.ItemStack(
 			org.bukkit.Material.valueOf(_market.type),
 			_tradeInfo.tradeAmount);
-			
-		var itemStacks = casino.splitItem(itemStack,5);
 		
-		casino.dropItem(_market.platform,world,itemStacks,40,8);
+		market.store.inventory[_market.type].amount -= _tradeInfo.tradeAmount;
+		var itemStacks = casino.splitItem([itemStack],32);
+		casino.dropItem(_market.dropper,world,itemStacks,10,2,0.2);
 		
 		_market.remainder = _tradeInfo.newRemain;
 	},
-	validSource: function(type){
+	validSource: function(type,avoidType){
 		var _t = market.store.inventory[type];
 		if(_t==undefined || !_t.allow)	return false;
+		if(avoidType!=undefined&&avoidType==_t) return false;
 		return true;
+	},	
+	tradeSignUpdate: function(){
+		var refValue = this.getRefPrices();
+		
+		
+		for(var si in market.store.stations){
+			var station = market.store.stations[si];
+			var world = server.getWorld(station.world);
+			var tradeInfo = this.getTrade(si,world);
+			if(tradeInfo.tradeAmount<0){
+				this.setSign(station.signEqualAmount,world,
+					[
+						"",
+						"请放入交易物品",
+						""
+					]);
+			}else{
+				this.setSign(station.signEqualAmount,world,
+					[
+						"可以交换",
+						"§a"+tradeInfo.tradeAmount+".§c["+Math.floor(100*tradeInfo.newRemain)+"]","",
+						"§6<"+station.type+">"
+					]);
+					
+				this.setSign(station.signTradeReference,world,
+					[
+						"参考价值",
+						"§a"+java.lang.String.format("%.2f",refValue[station.type]*100000),
+						"",
+						"§6<"+station.type+">"
+					]);
+			}
+		}
 	}
 },true);
 
@@ -141,7 +200,7 @@ market.store.inventory = {
 		c: 1,
 		allow: true
 	},
-	WOOD: {
+	LOG: {
 		amount: 2000,
 		lambda: 1.1,
 		c: 1,
@@ -155,11 +214,19 @@ market.store.stations = {
 		remainder: 0,
 		type: "DIAMOND",
 		platform: "trade_diamond_platform",
-		signTradeReference: "",
-		signEqualAmount: "",
+		dropper: "4",
+		signTradeReference: "trade_diamond_sign_ref",
+		signEqualAmount: "trade_diamond_sign_amount",
 		signInventoryAmount: "",
+		world: "world"
 	}
 };
 
-ready(function(){	
+ready(function(){
+	var updateTask = new java.lang.Runnable({
+		run: function(){
+			market.tradeSignUpdate();
+		}
+	});
+	server.getScheduler().runTaskTimer(__plugin,updateTask,20,20);
 });
