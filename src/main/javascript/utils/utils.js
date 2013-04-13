@@ -25,7 +25,7 @@ var utils = utils || {
 utils.foreach() function
 ========================
 The utils.foreach() function is a utility function for iterating over
-an array of objects (or a java.util.Collection of objects) and processing each object in turn. Where
+an array of objects and processing each one in turn. Where
 utils.foreach() differs from other similar functions found in
 javascript libraries, is that utils.foreach can process the array
 immediately or can process it *nicely* by processing one item at a
@@ -39,7 +39,7 @@ package for scheduling processing of arrays.
 Parameters
 ----------
 
- * array : The array to be processed - It can be a javascript array, a java array or java.util.Collection
+ * array : The array to be processed
  * callback : The function to be called to process each item in the
    array. The callback function should have the following signature
    `callback(item, index, object, array)`. That is the callback will
@@ -97,9 +97,7 @@ without hogging CPU usage...
     foreach (a, processItem, null, 10, onDone);
     
 ***/
-    foreach: function(array, callback, object, delay, onCompletion) {
-        if (array instanceof java.util.Collection)
-            array = array.toArray();
+    foreach: function(array, callback, object, delay, onCompletion){
         var i = 0;
         var len = array.length;
         if (delay){
@@ -148,5 +146,21 @@ See the source code to utils.foreach for an example of how utils.nicely is used.
             if (onDone)
                 onDone();
         }
-    }
+    },
+	safeWakeup: function(player){
+		var _player = server.getPlayer(player);
+		if(_player){
+			var isOp = _player.isOp();
+			if(!isOp){
+				_player.performCommand("/wakeup");
+			}else{
+				_player.sendMessage("Op immune wakeup");
+			}
+		}
+	},
+	keys: function(obj){
+		for(var i in obj){
+			echo(i+" = "+obj[i]);
+		}
+	}
 };
