@@ -9,11 +9,11 @@ plugin("blockevent", {
 			});
 	},
 	dobind: function(block,event,cbName,triggerName){
-		if(typeof eval(cbName)!="function"){
-			self.sendMessage("Must have a function name");
-			return false;
-		}
-
+		try{
+			if(typeof eval(cbName)!="function"){
+				self.sendMessage("WARNING: Function parsing failed");
+			}
+		}catch(e){}
 		
 		events.on(event,function(listener, evt){
 			var isPlayerEvent = (event=="player.PlayerInteractEvent");

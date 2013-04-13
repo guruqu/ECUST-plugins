@@ -1,4 +1,4 @@
-﻿load(__folder + "../events/events.js");
+load(__folder + "../events/events.js");
 
 plugin("market", {
 	listMarket: function(){
@@ -135,13 +135,19 @@ plugin("market", {
 			{
 				market.store.inventory[is.getType()].amount += is.getAmount();
 				entity.remove();
+				if(is.getAmount()>0){
+					__plugin.logger.info("User:"+player+" sold <"+is.getType()+"/"+is.getAmount+">");
+				}
 			}
 		}
 		
 		var itemStack = new org.bukkit.inventory.ItemStack(
 			org.bukkit.Material.valueOf(_market.type),
 			_tradeInfo.tradeAmount);
+		if(_tradeInfo.tradeAmount<=0)
+			return;
 		
+		__plugin.logger.info("User:"+player+" bought <"+_market.type+"/"+_tradeInfo.tradeAmount+">");
 		market.store.inventory[_market.type].amount -= _tradeInfo.tradeAmount;
 		var itemStacks = casino.splitItem([itemStack],32);
 		casino.dropItem(_market.dropper,world,itemStacks,10,2,0.2);
@@ -162,7 +168,8 @@ plugin("market", {
 			var station = market.store.stations[si];
 			var world = server.getWorld(station.world);
 			var tradeInfo = this.getTrade(si,world);
-			if(tradeInfo.tradeAmount<0){
+	//utils.keys(tradeInfo);
+			if(tradeInfo.tradeAmount<=0){
 				this.setSign(station.signEqualAmount,world,
 					[
 						"",
@@ -176,15 +183,15 @@ plugin("market", {
 						"§a"+tradeInfo.tradeAmount+".§c["+Math.floor(100*tradeInfo.newRemain)+"]","",
 						"§6<"+station.type+">"
 					]);
-					
-				this.setSign(station.signTradeReference,world,
+			}
+			
+			this.setSign(station.signTradeReference,world,
 					[
 						"参考价值",
 						"§a"+java.lang.String.format("%.2f",refValue[station.type]*100000),
 						"",
 						"§6<"+station.type+">"
 					]);
-			}
 		}
 	}
 },true);
@@ -193,7 +200,7 @@ plugin("market", {
 //market.store.inventory = market.store.inventory || {};
 
 // Mock inventoryj, reset every resttart
-market.store.inventory = {
+/*market.store.inventory = {
 	DIAMOND: {
 		amount: 1000,
 		lambda: 1.1,
@@ -221,7 +228,7 @@ market.store.stations = {
 		world: "world"
 	}
 };
-
+*/
 ready(function(){
 	var updateTask = new java.lang.Runnable({
 		run: function(){
