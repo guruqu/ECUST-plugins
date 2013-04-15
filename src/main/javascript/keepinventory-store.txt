@@ -1,0 +1,1 @@
+__data = {"bestChance":100,"worstChance":0}

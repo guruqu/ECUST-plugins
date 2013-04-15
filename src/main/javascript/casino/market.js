@@ -136,7 +136,7 @@ plugin("market", {
 				market.store.inventory[is.getType()].amount += is.getAmount();
 				entity.remove();
 				if(is.getAmount()>0){
-					__plugin.logger.info("User:"+player+" sold <"+is.getType()+"/"+is.getAmount+">");
+					__plugin.logger.info("User:"+player+" sold <"+is.getType()+"/"+is.getAmount()+">");
 				}
 			}
 		}
